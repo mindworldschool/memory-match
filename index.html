@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru">
+<html lang="uk">
 <head>
   <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-DVHX3G2VJV"></script>
@@ -36,43 +36,37 @@
 
   <!-- PWA -->
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#B68E6B">
+  <meta name="theme-color" content="#ff7c00">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
 
-  <title>Memory Match — MindWorld (Drum)</title>
-  <link rel="stylesheet" href="styles.css?v=2">
+  <title>Memory Match — MindWorld School</title>
+  <!-- Общая оболочка публичных тренажёров: шапка, языки, шрифты, цвета -->
+  <link rel="stylesheet" href="/trainer-shell/shell.v1.css">
+  <link rel="stylesheet" href="styles.css?v=3">
+  <script src="/trainer-shell/shell.v1.js"></script>
 </head>
 <body>
-  <header class="header">
-    <img src="assets/logo_mindworld.png" alt="MindWorld" class="brand-left">
-    <div class="title">Memory Match</div>
-    <div class="lang-switcher">
-      <select id="langSelect">
-        <option value="ua" selected>UA</option>
-        <option value="en">EN</option>
-        <option value="ru">RU</option>
-      </select>
-    </div>
-      </header>
+  <!-- Сюда оболочка вставит шапку (лого, название, UA / EN / RU / ES) -->
+  <div id="mw-header"></div>
 
   <main class="container">
     <!-- Start Screen -->
     <section id="screen-start" class="card">
       <div class="start-panel">
-        <h2 class="section-title">Настройка игры</h2>
+        <h2 class="section-title">Налаштування гри</h2>
         <div class="controls-row">
           <div class="group">
             <label for="mode">Тип пар:</label>
             <select id="mode">
-              <option value="img-img">Картинка–Картинка</option>
+              <option value="img-img">Зображення–Зображення</option>
               <option value="word-word">Слово–Слово</option>
-              <option value="img-word">Картинка–Слово</option>
+              <option value="img-word">Зображення–Слово</option>
             </select>
           </div>
           <div class="group">
-            <label for="pairCount">Количество пар:</label>
+            <label for="pairCount">Кількість пар:</label>
             <input id="pairCount" type="number" value="6" min="2" step="1">
           </div>
         </div>
@@ -80,17 +74,17 @@
           <div class="group">
             <label for="timeMode">Режим:</label>
             <select id="timeMode">
-              <option value="no-time">Без времени</option>
-              <option value="with-time">Время раунда</option>
+              <option value="no-time">Без часу</option>
+              <option value="with-time">Час раунду</option>
             </select>
           </div>
           <div class="group" id="timeGroup" style="display:none">
-            <label for="roundSeconds">Секунды:</label>
+            <label for="roundSeconds">Секунди:</label>
             <input id="roundSeconds" type="number" value="60" min="10" step="5">
           </div>
         </div>
         <div class="controls-row">
-          <button id="btnStart" onclick="startGame()">Начать игру</button>
+          <button id="btnStart" onclick="startGame()">Почати гру</button>
         </div>
       </div>
     </section>
@@ -99,9 +93,9 @@
     <section id="screen-memory" class="card hidden">
       <div class="flex-col">
         <div class="topbar">
-          <button id="btnExitMemory" class="exit">Выход</button>
-          <div><span class="badge">Экран запоминания</span> <span id="memoryMeta" class="meta">Пара 1/1</span></div>
-          <button id="btnMemoryDone" class="secondary">Запомнил все — начать игру</button>
+          <button id="btnExitMemory" class="exit">Вихід</button>
+          <div><span class="badge">Екран запам’ятовування</span> <span id="memoryMeta" class="meta">Пара 1/1</span></div>
+          <button id="btnMemoryDone" class="secondary">Запам’ятав усе — почати гру</button>
         </div>
 
         <div class="memory-stage">
@@ -110,8 +104,8 @@
             <div class="frame" id="memoryRight"></div>
           </div>
           <div class="nav-vertical">
-            <button id="btnMemPrev">▲</button>
-            <button id="btnMemNext">▼</button>
+            <button id="btnMemPrev" aria-label="Previous pair">▲</button>
+            <button id="btnMemNext" aria-label="Next pair">▼</button>
           </div>
         </div>
       </div>
@@ -121,8 +115,8 @@
     <section id="screen-play" class="card hidden">
       <div class="flex-col">
         <div class="topbar">
-          <button id="btnExitPlay" class="exit">Выход</button>
-          <div id="playMetaLeft"><span class="badge">Игра</span> <span id="playMeta" class="meta">Пара 1/1 • Режим: —</span></div>
+          <button id="btnExitPlay" class="exit">Вихід</button>
+          <div id="playMetaLeft"><span class="badge" id="playBadge">Гра</span> <span id="playMeta" class="meta">Пара 1/1 • Режим: —</span></div>
           <div id="timerBox" class="badge hidden">00:00</div>
         </div>
 
@@ -132,12 +126,12 @@
             <div class="frame drop-target" id="playRight"></div>
           </div>
           <div class="nav-vertical">
-            <button id="btnPlayPrev">▲</button>
-            <button id="btnPlayNext">▼</button>
+            <button id="btnPlayPrev" aria-label="Previous pair">▲</button>
+            <button id="btnPlayNext" aria-label="Next pair">▼</button>
           </div>
         </div>
 
-        <h3 class="section-title">Варианты ответа</h3>
+        <h3 class="section-title" id="answerOptionsTitle">Варіанти відповіді</h3>
         <div id="optionsTray" class="bottom-tray"></div>
       </div>
     </section>
@@ -145,14 +139,14 @@
     <!-- Results Screen -->
     <section id="screen-results" class="card hidden">
       <div class="results">
-        <h2>Результаты</h2>
+        <h2>Результати</h2>
         <div class="stats">
           <div class="stat">Правильно: <span id="statCorrect">0</span></div>
-          <div class="stat">Ошибки: <span id="statWrong">0</span></div>
+          <div class="stat">Помилки: <span id="statWrong">0</span></div>
         </div>
         <div class="controls-row">
-          <button id="btnRepeat">Повторить раунд</button>
-          <button id="btnNew" class="secondary">Новая игра</button>
+          <button id="btnRepeat">Повторити раунд</button>
+          <button id="btnNew" class="secondary">Нова гра</button>
         </div>
       </div>
     </section>
@@ -161,11 +155,11 @@
   <!-- Exit confirmation modal -->
   <div id="exitModal" class="modal hidden" aria-hidden="true" role="dialog" aria-modal="true">
     <div class="modal-card">
-      <h3>Завершить игру?</h3>
-      <p class="meta">Текущий прогресс не сохранится.</p>
+      <h3>Завершити гру?</h3>
+      <p class="meta">Поточний процес не збережеться.</p>
       <div class="controls-row">
-        <button id="exitYes">Да, выйти</button>
-        <button id="exitNo" class="secondary">Отмена</button>
+        <button id="exitYes">Так, вийти</button>
+        <button id="exitNo" class="secondary">Скасувати</button>
       </div>
     </div>
   </div>

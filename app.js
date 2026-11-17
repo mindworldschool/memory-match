@@ -1,6 +1,10 @@
 // === Translations (merged) ===
 const translations = {
   ru: {
+    play_badge: "Игра",
+    answer_options: "Варианты ответа",
+    prev_pair: "Предыдущая пара",
+    next_pair: "Следующая пара",
     start_title: "Настройка игры",
     pairs_count: "Количество пар:",
     mode: "Тип пар:",
@@ -31,6 +35,10 @@ const translations = {
     }
   },
   ua: {
+    play_badge: "Гра",
+    answer_options: "Варіанти відповіді",
+    prev_pair: "Попередня пара",
+    next_pair: "Наступна пара",
     start_title: "Налаштування гри",
     pairs_count: "Кількість пар:",
     mode: "Тип пар:",
@@ -61,6 +69,10 @@ const translations = {
     }
   },
   en: {
+    play_badge: "Game",
+    answer_options: "Answer options",
+    prev_pair: "Previous pair",
+    next_pair: "Next pair",
     start_title: "Game Settings",
     pairs_count: "Number of pairs:",
     mode: "Pair type:",
@@ -89,27 +101,48 @@ const translations = {
       "word-word": "Word–Word",
       "img-word": "Image–Word"
     }
+  },
+  // Испанский: тексты взяты из Cabinet-memory-match, новые 4 ключа добавлены здесь
+  es: {
+    play_badge: "Juego",
+    answer_options: "Opciones de respuesta",
+    prev_pair: "Par anterior",
+    next_pair: "Par siguiente",
+    start_title: "Configuración del juego",
+    pairs_count: "Número de pares:",
+    mode: "Tipo de pares:",
+    time_mode: "Modo:",
+    no_time: "Sin tiempo",
+    with_time: "Tiempo de ronda",
+    seconds: "Segundos:",
+    start_game: "Iniciar juego",
+    exit: "Salir",
+    memory_screen: "Pantalla de memorización",
+    memorized_start: "Memorizado todo — iniciar juego",
+    results: "Resultados",
+    correct: "Correcto:",
+    mistakes: "Errores:",
+    repeat_round: "Repetir ronda",
+    new_game: "Nuevo juego",
+    confirm_end: "¿Terminar el juego?",
+    unsaved: "El progreso actual no se guardará.",
+    yes_exit: "Sí, salir",
+    cancel: "Cancelar",
+    pair_word: "Par",
+    mode_word: "Modo",
+    praise: ["¡Bien hecho!", "¡Excelente!"],
+    modes: {
+      "img-img": "Imagen–Imagen",
+      "word-word": "Palabra–Palabra",
+      "img-word": "Imagen–Palabra"
+    }
   }
 };
 
-// === АВТО-ОПРЕДЕЛЕНИЕ ЯЗЫКА (URL > Saved > Browser) ===
-// 1. Читаем ?lang=... из ссылки
-const urlParams = new URLSearchParams(window.location.search);
-const urlLang = urlParams.get('lang');
-
-// 2. Логика приоритетов: Ссылка -> Сохраненный -> Браузер -> UA
-let currentLang = 'ua'; // Значение по умолчанию
-
-if (urlLang && ['en', 'ru', 'ua', 'es'].includes(urlLang)) {
-  currentLang = urlLang; // Ссылка главнее всего!
-} else {
-  currentLang =
-    localStorage.getItem("mm_lang") ||
-    (document.getElementById("langSelect")?.value) ||
-    ((navigator.language || "").startsWith("ru") ? "ru" :
-     (navigator.language || "").startsWith("ua") ? "ua" : "en") || "ua";
-}
-// =======================================================
+// === ЯЗЫК ===
+// Язык выбирает общая оболочка (trainer-shell): ?lang= → сохранённый выбор → браузер → украинский.
+// Здесь только текущее значение; внутри тренажёра украинский называется "ua".
+let currentLang = 'ua';
 function applyTranslations() {
   const t = translations[currentLang];
 
@@ -135,6 +168,16 @@ function applyTranslations() {
   document.querySelector("#screen-memory .badge").textContent = t.memory_screen;
 
   document.querySelector("#btnExitPlay").textContent = t.exit;
+  document.getElementById("playBadge").textContent = t.play_badge;
+  document.getElementById("answerOptionsTitle").textContent = t.answer_options;
+  ["btnMemPrev", "btnPlayPrev"].forEach(id => {
+    const b = document.getElementById(id);
+    if (b) { b.setAttribute("aria-label", t.prev_pair); b.title = t.prev_pair; }
+  });
+  ["btnMemNext", "btnPlayNext"].forEach(id => {
+    const b = document.getElementById(id);
+    if (b) { b.setAttribute("aria-label", t.next_pair); b.title = t.next_pair; }
+  });
 
   document.querySelector("#screen-results h2").textContent = t.results;
   document.querySelector("#screen-results .stat:nth-child(1)").childNodes[0].textContent = t.correct + " ";
@@ -149,19 +192,24 @@ function applyTranslations() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  const select = document.getElementById("langSelect");
-  if (select) {
-    select.value = currentLang;
-    select.addEventListener("change", (e) => {
-      currentLang = e.target.value;
-      localStorage.setItem("mm_lang", currentLang);
+  // Шапка и кнопки UA / EN / RU / ES — из оболочки. Она же ставит <html lang> и заголовок вкладки.
+  MWShell.init({
+    title: 'Memory Match',
+    tagline: {
+      ua: 'Тренажер пам’яті',
+      en: 'Memory trainer',
+      ru: 'Тренажёр памяти',
+      es: 'Entrenador de memoria'
+    },
+    docTitle: 'Memory Match — MindWorld School',
+    ukrainianCode: 'ua',
+    onLangChange: (lang) => {
+      currentLang = translations[lang] ? lang : 'ua';
       applyTranslations();
       if (typeof updateMemoryMeta === 'function') updateMemoryMeta();
       if (typeof updatePlayMeta === 'function') updatePlayMeta();
-    });
-  }
-  applyTranslations();
-  localStorage.setItem("mm_lang", currentLang);
+    }
+  });
 });
 // === End Translations ===
 

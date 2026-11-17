@@ -1,4 +1,5 @@
-const CACHE = 'memory-match-v1';
+// v2: переход на общую оболочку trainer-shell. Новое имя удаляет старый кэш у посетителей.
+const CACHE = 'memory-match-v2';
 
 // базовые статические ресурсы
 const STATIC_ASSETS = [
@@ -22,31 +23,45 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE).then((cache) => cache.addAll(STATIC_ASSETS))
   );
+  // Новая версия включается сразу, не дожидаясь закрытия всех вкладок
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then(keys =>
       Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-    )
+    ).then(() => self.clients.claim())
   );
 });
 
 self.addEventListener('fetch', (event) => {
   const { request } = event;
+  if (request.method !== 'GET') return;
 
-  // Сетевой приоритет для JSON-списков, кэш как fallback
-  if (request.url.includes('/assets/images/images.json') ||
-      request.url.includes('/assets/words/words.json')) {
+  const url = new URL(request.url);
+  // Чужие адреса (шрифты Google, аналитика) — без вмешательства
+  if (url.origin !== self.location.origin) return;
+
+  // Сеть в приоритете для страницы, кода, стилей, оболочки и JSON-списков:
+  // так правки на сайте доходят сразу, а кэш нужен только без сети.
+  const isCode = request.mode === 'navigate' ||
+    /\.(html|js|css|json)$/.test(url.pathname) ||
+    url.pathname.endsWith('/') ||
+    url.pathname.startsWith('/trainer-shell/');
+
+  if (isCode) {
     event.respondWith(
       fetch(request).then((r) => {
-        const copy = r.clone();
-        caches.open(CACHE).then((c) => c.put(request, copy));
+        if (r.ok && url.pathname.startsWith(self.registration.scope.replace(self.location.origin, ''))) {
+          const copy = r.clone();
+          caches.open(CACHE).then((c) => c.put(request, copy));
+        }
         return r;
       }).catch(() => caches.match(request))
     );
   } else {
-    // Cache-first для всего остального
+    // Картинки и звуки — из кэша, если уже есть
     event.respondWith(
       caches.match(request).then((cached) => cached || fetch(request))
     );
